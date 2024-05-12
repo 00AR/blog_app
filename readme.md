@@ -20,9 +20,12 @@ To get started with the Blog Platform API, follow these steps:
     ```
 - MongoDB setup: 
     - Create a file `.env` in app folder
-    - These are the mandatory environment variables that must be entered
+        ```bash
+        touch app/.env
         ```
-        MONGO_IP="mongo"
+    - Copy and paste these mandatory environment variables that must be entered. **Note:**: Replace the values of these variables with you system specific details. 
+        ```
+        MONGO_IP="localhost"
         MONGO_PORT="27017"
         MONGO_USER="your mongodb username"
         MONGO_PWD="your mongodb password"
@@ -36,7 +39,10 @@ To get started with the Blog Platform API, follow these steps:
 
 ## Running Tests
 - Create a file `.test.env` in `app/` folder of the repository
-- Add the following environment variables with required values
+    ```bash
+    touch app/.test.env
+    ```
+- Add the following environment variables with required values in this file
     ```
     MONGO_IP="localhost"
     MONGO_PORT="27017"
