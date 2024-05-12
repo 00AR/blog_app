@@ -17,8 +17,12 @@ app.dependency_overrides = {
 
 @pytest.fixture(scope="session", autouse=True)
 def mongo_db() -> AsyncIOMotorDatabase:
-    print("!!!!!!!!", settings.MONGO_DB)
-    client = AsyncIOMotorClient(settings.MONGO_DETAILS)
+    ip = settings.MONGO_IP
+    port = settings.MONGO_PORT
+    username = settings.MONGO_USER
+    pwd = settings.MONGO_PWD
+    mongo_uri = "mongodb://" + str(ip) + ":" + str(port) + username + pwd
+    client = AsyncIOMotorClient(mongo_uri)
     return client[settings.MONGO_DB]
 
 
@@ -30,6 +34,11 @@ def client() -> Generator[TestClient, None, None]:
 
 @pytest.fixture(autouse=True)
 def clean_db():
-    mongo_client = MongoClient(settings.MONGO_DETAILS)
+    ip = settings.MONGO_IP
+    port = settings.MONGO_PORT
+    username = settings.MONGO_USER
+    pwd = settings.MONGO_PWD
+    mongo_uri = "mongodb://" + str(ip) + ":" + str(port) + username + pwd
+    mongo_client = MongoClient(mongo_uri)
     if settings.MONGO_DB.startswith("test"):
         mongo_client.drop_database(settings.MONGO_DB)
