@@ -23,7 +23,7 @@ To get started with the Blog Platform API, follow these steps:
         ```bash
         touch app/.env
         ```
-    - Copy and paste these mandatory environment variables that must be entered. **Note:**: Replace the values of these variables with you system specific details. 
+    - Add these mandatory environment variables to this file. **Note:**: Substitute the values of these variables with suitable values, especially `MONGO_USER` and `MONGO_PWD`. 
         ```
         MONGO_IP="localhost"
         MONGO_PORT="27017"
