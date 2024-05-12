@@ -19,15 +19,15 @@ To get started with the Blog Platform API, follow these steps:
     pip install -r requirements.txt
     ```
 - MongoDB setup: 
- - Create a file .env in app folder
- - These are the mandatory environment variables that must be entered
- ```
-MONGO_IP="mongo"
-MONGO_PORT="27017"
-MONGO_USER="your mongodb username"
-MONGO_PWD="your mongodb password"
-MONGO_DB=blog_app
- ```
+    - Create a file `.env` in app folder
+    - These are the mandatory environment variables that must be entered
+        ```
+        MONGO_IP="mongo"
+        MONGO_PORT="27017"
+        MONGO_USER="your mongodb username"
+        MONGO_PWD="your mongodb password"
+        MONGO_DB=blog_app
+        ```
 - Run the API server
     ```bash
     uvicorn app.main:app
@@ -37,20 +37,23 @@ MONGO_DB=blog_app
 ## Running Tests
 - Create a file `.test.env` in `app/` folder of the repository
 - Add the following environment variables with required values
-```
-MONGO_IP="localhost"
-MONGO_PORT="27017"
-MONGO_USER="your mongodb username"
-MONGO_PWD="your mongodb password"
-MONGO_DB=test_blog_app
-```
-- In `app/config.py`, find the line `env_file = '.env'` and replace it with this line `env_file = 'app/.test.env'`
+    ```
+    MONGO_IP="localhost"
+    MONGO_PORT="27017"
+    MONGO_USER="your mongodb username"
+    MONGO_PWD="your mongodb password"
+    MONGO_DB=test_blog_app
+    ```
+- In `app/config.py`, find the line `env_file = '.env'` and replace it with this line 
+    ```py
+    env_file = 'app/.test.env'
+    ```
 - In terminal with the repository as the current work directory enter the following command
-```bash
-pytest
-```
+    ```bash
+    pytest
+    ```
 - or run this command: `pytest -s app/tests/api/routes/test_blogs.py`
-- Note: after running tests, make sure to undo the changes in `app/config.py` for running the app normally. My bad, ran out of time, hence this remained a little hackish.
+- **Note:** after running tests, make sure to undo the changes in `app/config.py` for running the app normally. My bad, ran out of time, hence this remained a little hackish :D
 
 ## API Details
 ![image](./images/api.png)
