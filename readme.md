@@ -1,5 +1,6 @@
 # Blog Platform API
 This repository contains the codebase for a RESTful API built with Python using the FASTAPI framework. The API allows users to perform CRUD operations on blog posts, comment on posts, and like/dislike posts. The data is stored in a MongoDB database.
+The app uses JWT based authentication and assigns access token to user at login. User must authenticate for accessing their blogs and to react with likes and comments to other user's blogs. The token expires after a period of time, after which the user is required to login again.
 
 ## Requirements
 - python
@@ -62,4 +63,5 @@ To get started with the Blog Platform API, follow these steps:
 - **Note:** after running tests, make sure to undo the changes in `app/config.py` for running the app normally. My bad, ran out of time, hence this remained a little hackish :D
 
 ## API Details
+![signup_login](./images/signup-login-apis.png)
 ![image](./images/api.png)
