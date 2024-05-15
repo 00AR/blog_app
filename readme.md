@@ -63,5 +63,5 @@ To get started with the Blog Platform API, follow these steps:
 - **Note:** after running tests, make sure to undo the changes in `app/config.py` for running the app normally. My bad, ran out of time, hence this remained a little hackish :D
 
 ## API Details
-![signup_login](./images/signup-login-apis.png)
+![signup_login](./images/signup_login_apis.png)
 ![image](./images/api.png)
