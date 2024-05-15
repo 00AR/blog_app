@@ -29,3 +29,18 @@ async def create_user(
         "password": user.password
     })
     return sign_jwt(user.email)
+
+
+@router.post("/user/login", tags=["users"])
+async def user_login(
+    user: UserLoginSchema,
+    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
+):
+    # check if the user is registered
+    is_registered = await mongo_db.users.find_one({ "email": user.email })
+    if is_registered:
+        return sign_jwt(user.email)
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect email/password"
+    )

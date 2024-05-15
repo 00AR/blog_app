@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 from bson import ObjectId
 from fastapi import Path
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import get_current_user, get_mongo
+from app.auth.auth_bearer import JWTBearer
 from app.models.blogs import AddCommentSchema, BlogDetailResponseSchema, BlogSchema, CreateBlogSchema, ReactionTypeEnum, UserReactionSchema
 from app.models.users import AuthUser
 
@@ -18,16 +19,18 @@ id_regex = r"^[0-9a-f]{24}$"
 @router.post("/")
 async def create_blog(
     blog: CreateBlogSchema,
-    user: AuthUser = Depends(get_current_user),
+    token: Annotated[str, Depends(JWTBearer())],
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
     """
     Create new blog.
     """
+    # TODO: is it ok to not check token of being None
+    username = await get_current_user(token)
     insert_blog = BlogSchema(
         title=blog.title,
         content=blog.content,
-        created_by=user.user_id,
+        created_by=username,
     )
     blog_dict = dict(insert_blog)
     await mongo_db.blogs.insert_one(blog_dict)
@@ -38,10 +41,11 @@ async def create_blog(
 @router.put("/{blog_id}")
 async def update_blog(
     blog: CreateBlogSchema,
+    token: Annotated[str, Depends(JWTBearer())],
     blog_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     blog_id = ObjectId(blog_id)
     document = await mongo_db.blogs.find_one({"_id": blog_id})
     if document is None:
@@ -49,7 +53,7 @@ async def update_blog(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Blog with given id does not exists!",
         )
-    if user.user_id != document["created_by"]:
+    if username != document["created_by"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to update this blog",
@@ -146,9 +150,10 @@ async def get_blog_detail(
 async def add_comment(
     data: AddCommentSchema,
     blog_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
+    token: Annotated[str, Depends(JWTBearer())] = None,
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     blog_id = ObjectId(blog_id)
     blog = await mongo_db.blogs.find_one({"_id": blog_id}, {"_id": True})
     if blog is None:
@@ -157,7 +162,7 @@ async def add_comment(
             detail="Blog with given id does not exists!",
         )
     user_comment = {
-        "user_id": user.user_id,
+        "user_id": username,
         "blog_id": blog_id,
         "comment": data.comment,
         "created_at": datetime.now()
@@ -176,7 +181,6 @@ async def add_comment(
 @router.delete("/{blog_id}/comments/{comment_id}", status_code=204)
 async def delete_comment(
     blog_id: str = Path(..., pattern=id_regex),
-    
     comment_id: str = Path(..., pattern=id_regex),
     user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),

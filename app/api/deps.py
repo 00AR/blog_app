@@ -1,10 +1,13 @@
+from app.auth.auth_handler import decode_jwt
 from app.config import settings
-from app.models.users import AuthUser
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 
-async def get_current_user():
-    return AuthUser(user_id="test-user")
+async def get_current_user(token):
+    decoded_token = decode_jwt(token)
+    mongo_db = await get_mongo()
+    user_id = await mongo_db.users.find_one({ "email": decoded_token["user_id"] })
+    return user_id["name"]
 
 
 async def get_mongo() -> AsyncIOMotorDatabase:
