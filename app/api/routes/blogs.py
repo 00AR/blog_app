@@ -75,10 +75,11 @@ async def update_blog(
 
 @router.delete("/{blog_id}", status_code=204)
 async def delete_blog(
+    token: Annotated[str, Depends(JWTBearer())],
     blog_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     blog_id = ObjectId(blog_id)
     document = await mongo_db.blogs.find_one({"_id": blog_id})
     if document is None:
@@ -86,7 +87,8 @@ async def delete_blog(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Blog with given id does not exists!",
         )
-    if user.user_id != document["created_by"]:
+    # BUG: compare email ids instead
+    if username != document["created_by"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to delete this blog",
@@ -180,11 +182,12 @@ async def add_comment(
 
 @router.delete("/{blog_id}/comments/{comment_id}", status_code=204)
 async def delete_comment(
+    token: Annotated[str, Depends(JWTBearer())],
     blog_id: str = Path(..., pattern=id_regex),
     comment_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     comment_id = ObjectId(comment_id)
     user_comment = await mongo_db.comments.find_one({"_id": comment_id})
     if user_comment is None:
@@ -192,7 +195,8 @@ async def delete_comment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No such comment.",
         )
-    if user_comment["user_id"] != user.user_id:
+    # BUG: compare email ids instead
+    if user_comment["user_id"] != username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You are not authorized to delete this comment",
@@ -208,10 +212,11 @@ async def delete_comment(
 @router.put("/{blog_id}/comments/{comment_id}")
 async def update_comment(
     data: AddCommentSchema,
+    token: Annotated[str, Depends(JWTBearer())],
     comment_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     comment_id = ObjectId(comment_id)
     user_comment = await mongo_db.comments.find_one({"_id": comment_id})
     if user_comment is None:
@@ -219,7 +224,8 @@ async def update_comment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No such comment.",
         )
-    if user_comment["user_id"] != user.user_id:
+    # BUG: compare emails ids instead
+    if user_comment["user_id"] != username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You cannot update this comment.",
@@ -271,10 +277,11 @@ async def get_blog_comments(
 @router.post("/{blog_id}/{reaction_type}", response_model=UserReactionSchema)
 async def reaction(
     reaction_type: ReactionTypeEnum,
+    token: Annotated[str, Depends(JWTBearer())],
     blog_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = await get_current_user(token)
     blog_id = ObjectId(blog_id)
     blog = await mongo_db.blogs.find_one({"_id": blog_id}, {"_id": True})
     if blog is None:
@@ -282,14 +289,14 @@ async def reaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Blog with given id does not exists!",
         )
-    user_reaction = await mongo_db.user_reactions.find_one({"blog_id": blog_id, "user_id": user.user_id})
+    user_reaction = await mongo_db.user_reactions.find_one({"blog_id": blog_id, "user_id": username})
     if user_reaction is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You have already reacted. Please undo reaction and try again.",
         )
     user_reaction = {
-        "user_id": user.user_id,
+        "user_id": username,
         "blog_id": blog_id,
         "reaction_type": reaction_type,
     }
@@ -306,17 +313,19 @@ async def reaction(
 @router.delete("/{blog_id}/{reaction_type}", status_code=204)
 async def undo_reaction(
     reaction_type: ReactionTypeEnum,
+    token: Annotated[str, Depends(JWTBearer())],
     blog_id: str = Path(..., pattern=id_regex),
-    user: AuthUser = Depends(get_current_user),
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo),
 ):
+    username = get_current_user(token)
     blog_id = ObjectId(blog_id)
-    user_reaction = await mongo_db.user_reactions.find_one({"blog_id": blog_id, "user_id": user.user_id, "reaction_type": reaction_type})
+    user_reaction = await mongo_db.user_reactions.find_one({"blog_id": blog_id, "user_id": username, "reaction_type": reaction_type})
     if user_reaction is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You have not reacted yet.",
         )
+    
     await mongo_db.user_reactions.delete_one({"_id": user_reaction["_id"]})
     await mongo_db.blogs.update_one(
         {"_id": blog_id},
